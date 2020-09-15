@@ -2,6 +2,7 @@ import * as d3 from 'd3';
 import React, { useRef, useEffect, useCallback } from 'react';
 import { jsPDF } from 'jspdf';
 import * as canvg from 'canvg';
+import 'svg2pdf.js';
 
 function BarChart({ width, height, data }) {
   const svgRef = useRef(null);
@@ -59,8 +60,8 @@ function BarChart({ width, height, data }) {
   const getPdf = useCallback(() => {
     if (svgRef.current && canvasRef.current) {
       const svgData = new XMLSerializer().serializeToString(svgRef.current);
-      console.log('svgData', svgData);
-
+      console.log('svgData:', svgData);
+      console.log('svgRef.current:', svgRef.current);
       // Get canvas
       const canvas = canvasRef.current;
       console.log(canvas);
@@ -77,16 +78,27 @@ function BarChart({ width, height, data }) {
       // render
       //canvg(canvas, this.state.datasvg, options);
       const v = canvg.Canvg.fromString(ctx, svgData, options);
-      // const imageData = canvas
-      //   .toDataURL('image/png')
-      //   .replace('image/png', 'image/octet-stream');
       v.start();
+
       console.log('v', v);
+
       const pdf = new jsPDF('p', 'pt', 'a4');
-      // pdf.addImage(imageData, 'PNG', 40, 40, 100, 100);
-      // const svgData = new XMLSerializer().serializeToString(svg.current)
-      pdf.addSvgAsImage(svgData, 0, 0, 270, 130);
-      pdf.save('barchart.pdf');
+      pdf.text('Testing output', 10, 20);
+
+      // Buggy, https://github.com/MrRio/jsPDF/issues/1740
+      // pdf.addSvgAsImage(svgData, 0, 0, 270, 130);
+      // pdf.save('barchart.pdf');
+
+      pdf
+        .svg(svgRef.current, {
+          x: 0,
+          y: 0,
+          width: 500,
+          height: 500,
+        })
+        .then(() => {
+          pdf.save('barchart.pdf');
+        });
     }
   }, [svgRef.current, canvasRef.current]);
 
